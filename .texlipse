@@ -1,0 +1,14 @@
+#TeXlipse project settings
+#Sun Oct 21 19:31:52 CEST 2012
+markTmpDer=true
+builderNum=2
+outputDir=bin
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=tmp
+mainTexFile=sor-set.tex
+outputFile=sor-set.pdf
+langSpell=en
+markDer=true
+srcDir=src

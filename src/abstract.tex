@@ -1,0 +1,14 @@
+\begin{abstract}
+Data replication is the fundamental approach to achieve load balancing,
+scalability, and fault tolerance. In order to maintain replicas of some mutable
+shared object consistent, synchronization is usually needed.
+\textit{Conflict-free Replicated Data Types} (CRDTs) ensure eventual
+consistency, such that replicas converge to a common state, equivalent to a
+correct sequential execution without foreground synchronization.
+
+A particular CRDT is the \textit{set} data type, a collection of unique
+elements. We present an efficient algorithm for sending deltas of updates
+between replicas and a specification for partitioning a set replica into
+disjunctive subsets. We add support for limited-lifetime elements and solve the
+problem unbounded database growth through a garbage collection mechanism.
+\end{abstract}
