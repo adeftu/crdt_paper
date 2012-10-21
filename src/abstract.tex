@@ -6,9 +6,10 @@ shared object consistent, synchronization is usually needed.
 consistency, such that replicas converge to a common state, equivalent to a
 correct sequential execution without foreground synchronization.
 
-A particular CRDT is the \textit{set} data type, a collection of unique
-elements. We present an efficient algorithm for sending deltas of updates
-between replicas and a specification for partitioning a set replica into
-disjunctive subsets. We add support for limited-lifetime elements and solve the
-problem unbounded database growth through a garbage collection mechanism.
+A particular CRDT is the \textit{set} data type, for storing a collection of unique
+elements. We improve this type specification by introducing an efficient
+algorithm for sending deltas of updates between replicas and by partitioning a
+set replica into disjunctive subsets. We add support for limited-lifetime
+elements and solve the problem of unbounded database growth through a garbage
+collection mechanism.
 \end{abstract}
