@@ -1,5 +1,8 @@
 \documentclass[10pt,conference,letterpaper]{IEEEtran} 
 
+\usepackage{url}
+\usepackage[noadjust]{cite}
+
 \usepackage[pdftex]{graphicx}
 \graphicspath{{../media/}}
 \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
@@ -24,7 +27,26 @@ jan.griebsch@1und1.de}
 
 \input{abstract}
 \begin{IEEEkeywords}
-eventual consistency; data replication; distributed-systems
+eventual consistency; data replication; distributed systems
 \end{IEEEkeywords}
+
+\input{introduction}
+
+\input{crdts}
+
+\input{existing_sets}
+
+\input{delta_sync}
+
+\input{sharding}
+
+\input{garbage_collection}
+
+\input{previous_work}
+
+\input{conclusions}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
 
 \end{document}

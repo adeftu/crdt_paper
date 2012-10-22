@@ -1,0 +1,76 @@
+\section{Introduction}
+\label{sec:introduction}
+
+The increase in demand of highly available data, supported by the growing
+exposure of Internet services that make this data accessible, shows that there
+is an obvious need today to satisfy requirements that were never before a priority.
+Now, features like throughput, consistency, and fault-tolerance are necessities,
+not optimizations, and are included in the design of any modern distributed data
+system from the beginning. One cannot accept delays in database requests of more
+than a few hundred milliseconds or downtimes of even a few minutes. The trend is
+clear: we need to process more data, quicker, and without interruptions.
+
+\textit{Replication} is a technique which ensures fault-tolerance on one hand,
+while providing the means for achieving higher scalability and performance on the
+other hand. However, it introduces the problem of maintaining different replicas
+of the same logical data consistent with each other. Ideally, we want the data
+stores to be always available, strongly consistent, and to operate flawlessly in
+the presence of network failures. CAP is a well known
+theorem~\cite{Gilbert:2002:BCF:564585.564601} which states that any distributed
+computer system cannot provide simultaneous guarantees for the aforementioned
+requirements. The majority of the current Internet services prefer availability
+and partition tolerance, at the cost of a weaker form of consistency. The choice
+has the advantage of lower latencies for client requests and higher scalability,
+but achieving consistency between replicas still remains an open issue.
+
+One attractive approach is to provide \textit{eventual
+consistency}~\cite{DBLP:journals/queue/Vogels08a,Saito:2005:OR:1057977.1057980},
+which allows any replica to apply updates locally and then to send the
+operations asynchronously to all the others. Thus, all replicas eventually apply
+all updates, possibly even in a different order. This weaker form of
+consistency, considered acceptable for some applications, has the advantage that
+data remains available when the network is partitioned. However, a complex
+background consensus algorithm for reconciling conflicting updates is generally
+needed~\cite{Terry:1995:MUC:224056.224070}, which makes current approaches
+ad-hoc and error-prone. Amazon's Shopping Cart constitutes a well-known example
+in this sense~\cite{DeCandia:2007:DAH:1294261.1294281}. Alternatively, several
+systems execute an update immediately and later discover that it conflicts with
+another~\cite{Terry:1995:MUC:224056.224070}. So they roll-back to resolve the
+conflict.
+
+\textit{Conflict-free Replicated Data Types} (CRDTs) were designed specifically
+to solve this problem by employing a new type of consistency, \textit{strong
+eventual consistency}, as defined in Section~\ref{sec:crdts}. Replicas of CRDTs
+are proved to converge in a self-stabilising manner without blocking client
+operations and without having to deal with consensus, complex conflict
+resolution, or roll-backs. However, since this model imposes some mathematical
+constraints, not all data structures are suitable for it.
+
+A strong motivation to study this concept comes from current demands to support
+frequent writes of runtime data to replicated, distributed stores, and to
+provide low latencies for reads. Because a consensus algorithm for conflicting
+updates would become a bottleneck, CRDTs are very attractive, as a replica may
+execute any operation locally. Consistency is achieved later during a
+background asynchronous phase in which all replicas eventually apply all
+updates. A second benefit is given by the composability nature of CRDTs: simple
+structures (counters, shared mutable variables, sets) can constitute building
+blocks in forming more complex ones, such as maps or graphs.
+
+The focus of this paper is a particular CRDT: the \textit{set} data type. To
+achieve a highly scalable replicated set, the following contributions are made:
+\begin{itemize}
+  \item Because one variant of CRDTs transfer full states between replicas when
+  propagating updates, an improvement to the set type is provided which
+  transmits only deltas.
+  \item Acknowledging the fact that large data structures cannot be efficiently
+  stored on just one machine, a partitioning scheme is often desired. Sets of
+  elements fit well in this category of structures, being easily partitioned in
+  several disjunctive subsets and distributed across a cluster of machines.
+  This solves both the problem of data growth by achieving higher scalability
+  and the problem of performance bottleneck by sharing the load. Thus, a second
+  contribution is an extension to the set specification to support per-replica
+  partitioning capability.
+  \item Since CRDTs usually lead to an increase in database size with each
+  update operation, an asynchronous garbage collection process to reclaim
+  obsolete elements from the set is discussed.
+\end{itemize}

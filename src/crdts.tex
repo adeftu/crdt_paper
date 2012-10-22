@@ -1,0 +1,23 @@
+\section{Conflict-free Replicated Data Types}
+\label{sec:crdts}
+
+% - consistency models (strong, eventual, strong eventual)
+% - CRDTs model: 2 approaches, comparison
+% - examples of CRDTs
+
+Achieving consistency is one of the hardest problems in the field of distributed
+systems. What we ideally want to have is replicas which are \textit{strongly
+consistent}, meaning that any update happening at one replica is made
+instantaneously visible at all the others. Because this approach implies
+synchronization after each update operation, essentially leading to a serial
+execution, it is rarely used in practice. \textit{Eventual
+consistency}~\cite{DBLP:journals/queue/Vogels08a,Saito:2005:OR:1057977.1057980}
+is a weaker form that moves the synchronization phase out of the critical path,
+to the background. In this way, updates can always be made locally, even if the
+network is partitioned. However, it still requires conflict arbitration
+techniques, such as a consensus algorithm or
+roll-backs~\cite{Terry:1995:MUC:224056.224070}.
+
+\textit{Conflict-free Replicated Data Types} (CRDTs) introduce the concept of
+\textit{Strong Eventual Consistency}
+(SEC)~\cite{Shapiro:2011:CRD:2050613.2050642}.
