@@ -1,11 +1,7 @@
 \section{Conflict-free Replicated Data Types}
 \label{sec:crdts}
 
-% - consistency models (strong, eventual, strong eventual)
-% - CRDTs model: 2 approaches, comparison
-% - examples of CRDTs
-
-Achieving consistency is one of the hardest problems in the field of distributed
+Achieving consistency is one of the hardest problems in distributed
 systems. What we ideally want to have is replicas which are \textit{strongly
 consistent}, meaning that any update happening at one replica is made
 instantaneously visible at all the others. Because this approach implies
@@ -20,4 +16,98 @@ roll-backs~\cite{Terry:1995:MUC:224056.224070}.
 
 \textit{Conflict-free Replicated Data Types} (CRDTs) introduce the concept of
 \textit{Strong Eventual Consistency}
-(SEC)~\cite{Shapiro:2011:CRD:2050613.2050642}.
+(SEC)~\cite{Shapiro:2011:CRD:2050613.2050642}. The idea is to design the data
+structures such that all updates have deterministic outcome, and thus they can 
+be made immediately persistent. In this way, conflicts are altogether avoided.
+There are two styles for defining CRDTs. 
+
+\textbf{State-based replication}. In this approach, each update operation is
+executed entirely at the source replica, modifying its state. Subsequently,
+every replica occasionally sends its local state to some other replica, which
+\textit{merges} it into its own state. Convergence is achieved by eventually
+delivering every update directly or indirectly to all replicas. There are well
+known protocols in the literature that do this in a fault-tolerant manner, such
+as gossip or anti-entropy~\cite{Demers:1987:EAR:41840.41841,
+Petersen:1997:FUP:268998.266711}.
+
+State-based style uses the concept of \textit{semilattice} defined as follows. A
+\textit{partially ordered set} is the pair consisting in a set together with a
+binary relation $\sqsubseteq$ which establishes an order between the elements of
+the set. A \textit{least upper bound} (LUB) $\sqcup$ is defined as follows: for
+any elements $x$, $y$ from the set, $m = x \sqcup y$ is LUB of $\{x, y\}$ if and
+only if $x \sqsubseteq m$ and $y \sqsubseteq m$ and there is no other $m'
+\sqsubseteq m$ such that $x \sqsubseteq m'$ and $y \sqsubseteq m'$. From this
+definition, it follows that a LUB is: i) commutative: $x \sqcup y = y \sqcup x$,
+ii) idempotent: $x \sqcup x = x$, iii) associative: $(x \sqcup y) \sqcup z = x
+\sqcup (y \sqcup z)$. A partially ordered set which has a LUB is called a
+\textit{join-semilattice}~\cite{semilattice} (or just \textit{semilattice} from
+now on). An example of semilattice is $(2^{\{x, y, z\}}, \subseteq)$, where
+$2^{\{x, y, z\}}$ is the power set of $\{x, y, z\}$ and the LUB is given by
+set-union.
+
+In order to be SEC, a state-based object needs to fullfill the following
+conditions:
+\begin{itemize}
+  \item Its payload takes values in a semilattice $(S,\sqsubseteq)$.
+  \item Updates monotonically increase the states according to $\sqsubseteq$.
+  \item The \textit{merge} operation computes the LUB between the local and
+  remote states.
+\end{itemize}
+
+An example of state-based object can be one whose payload is an integer value,
+$\sqsubseteq$ is common the integer order $\leq$, and where $merge()
+\stackrel{def}{=} max()$.
+
+\textbf{Operation-based (op-based) replication}. Here, the system transmits only
+update operations across replicas, and not whole states. Applying an update is
+split in two phases. The first one has no side-effects and its role is to
+compute some intermediary results. When it terminates, the system sends the
+update operation, its parameters, and possible intermediary results from the
+first phase to all replicas, including the source. Here, in the second phase,
+called \textit{downstream}, the operation is executed immediately at source and
+asynchronously at all other replicas if a downstream precondition is
+met\footnote{An example of such precondition could be that an element is allowed
+to be removed from a replicated set only if it is present in the set at source.}.
+This second phase cannot return results and has to execute atomically.
+
+An update $u$ is said to \textit{happen-before} an update $u'$ at some replica,
+denoted by $u \rightarrow u'$, if $u$ has been applied when $u'$ executes. Two
+updates are \textit{concurrent} if no one happens before the other: $u \parallel
+u' \iff u \not\rightarrow u' \land u' \not\rightarrow u$. The conditions for an
+op-based object to achieve SEC are:
+\begin{itemize}
+  \item Related updates by happened-before, $u \rightarrow u'$, are applied in
+  the same order at all replicas: first $u$ and then $u'$.
+  \item Concurrent operations, $u \parallel u'$, \textit{commute}: executing $u$
+  immediately followed by $u'$ leads to the same state as executing $u'$
+  immediately followed by $u$. Concurrent operations may be delivered in any
+  order.
+\end{itemize}
+
+There are common epidemic protocols, such as Bayou's
+anti-entropy~\cite{Petersen:1997:FUP:268998.266711}, which guarantee this
+causal ordering for updates delivery.
+
+Interestingly, these two replication styles are
+equivalent~\cite{Shapiro:2011:CRD:2050613.2050642}: any data type that can be
+implemented as a state-based object can also be implemented as an op-based
+object and vice versa. However, there are trade-offs which should be considered
+for each approach. State-based objects have the advantage of being simpler to
+reason about, given that all the information is captured by their state.
+Moreover, because this state is transmitted as part of the \textit{merge}
+procedure between two replicas, updates may be lost along the way, applied
+multiple times, or in different orders. This also constitutes a disadvantage
+since sending whole states is an expensive network operation for large
+objects. On the other hand, op-based objects are more complex to specify since
+we need to reason about history and to deliver the updates in a
+causal-consistent manner according to \textit{happens-before}. This puts
+pressure on the communication channel which has to be reliable and has to
+guarantee the same order of message delivery to all replicas. The advantage
+comes in the form of a greater expressive power for type specification, e.g.
+there is no \textit{merge} method which has to compute a LUB, and smaller
+payloads.
+
+Examples of current CRDT implementations~\cite{shapiro:inria-00555588} include:
+a) replicated counters: G-Counter, PN-Counter, Non-negative, b) registers, or
+mutable shared variables: LWW-Register, MV-Register, c) sets: G-Set, 2P-Set,
+U-set, PN-Set, OR-Set, d) graphs: 2P2P-Graph, Add-only monotonic DAG. 
