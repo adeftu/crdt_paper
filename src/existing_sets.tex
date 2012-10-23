@@ -1,2 +1,195 @@
 \section{Existing Replicated Set Designs}
 \label{sec:existing_sets}
+
+The set data type is a pervasive abstraction, used either directly or as a
+building block in more complex types, such as maps or graphs. The supported
+update operations are \textit{add} and \textit{remove} which add and,
+respectively, remove an element to and from the set. These operations do not
+commute and, therefore, a CRDT set will be only an approximation to the
+sequential specification of a set. Many designs for replicated sets have been
+proposed~\cite{shapiro:inria-00555588} and they mainly differ in which operation
+takes precedence in a $\textit{add}(e) \parallel \textit{remove}(e)$ situation.
+In this section we give examples of some specifications and argue that the
+OR-Set does not present any anomaly as the others do, which could lead to a
+counter-intuitive behavior.
+
+\textbf{G-Set}. The first CRDT implementation of a set, \textit{Grow-Only Set},
+allows for \textit{add} and \textit{lookup} operations. Both state-based and
+op-based versions have a set as payload. To prove that this is a CmRDT it is
+easy to see that $\textit{add}(e)$ is commutative, being based on a set-union
+operation between the payload and $\{e\}$. In the state-based approach, as shown
+in Specification~\ref{alg:g_set_state_based}, the partial order on states $S$
+and $T$ is given by $S \sqsubseteq T \iff S \subseteq T$. Then, the
+\textit{merge} operation defined as $\textit{merge}(S,T) = S \cup T$ computes
+the LUB in the monotonic semilattice $(S, \sqsubseteq)$. And so, G-Set is also a
+CvRDT\footnote{For proofs on the rest of the constructs, the reader is
+referred to \cite{shapiro:inria-00555588}.}.
+
+\begin{algorithm}[t]
+\small{
+	\floatname{algorithm}{Specification}
+	\caption{G-Set (state-based)}
+ 	\label{alg:g_set_state_based}                       
+
+ 	\begin{algorithmic}[1]
+ 	  \State \Payload $A = \varnothing$
+ 	  
+ 	  \State \Update $add(e)$
+ 	  \State \hspace{\algorithmicindent} $A \coloneqq A \cup \{e\}$
+ 	  
+ 	  \State \Query $lookup(e) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $e \in A$
+ 	  
+ 	  \State \Compare $(S, T) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $S.A \subseteq T.A$
+ 	  
+ 	  \State \Merge $(S, T) : \text{payload}$
+ 	  \State \hspace{\algorithmicindent} \Return $S.A \cup T.A$
+	\end{algorithmic}
+ }
+\end{algorithm}
+
+\begin{algorithm}[t]
+\small{
+	\floatname{algorithm}{Specification}
+	\caption{2P-Set (state-based)}
+ 	\label{alg:2p_set_state_based}                       
+
+ 	\begin{algorithmic}[1]
+ 	  \State \Payload $A = \varnothing, R = \varnothing$
+ 	  
+ 	  \State \Update $add(e)$
+ 	  \State \hspace{\algorithmicindent} $A \coloneqq A \cup \{e\}$
+ 	  
+ 	  \State \Update $remove(e)$
+ 	  \State \hspace{\algorithmicindent} \Pre $lookup(e)$
+ 	  \State \hspace{\algorithmicindent} $R \coloneqq R \cup \{e\}$
+ 	  
+ 	  \State \Query $lookup(e) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $e \in A \land e \not\in R$
+ 	  
+ 	  \State \Compare $(S, T) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $S.A \subseteq T.A \lor S.R \subseteq T.R$ 
+ 	  
+ 	  \State \Merge $(S, T) : \text{payload}$
+ 	  \State \hspace{\algorithmicindent} \Let $U.A = S.A \cup T.A$
+ 	  \State \hspace{\algorithmicindent} \Let $U.R = S.R \cup T.R$
+ 	  \State \hspace{\algorithmicindent} \Return $U$
+	\end{algorithmic}
+ }
+\end{algorithm}
+
+\textbf{2P-Set}. A \textit{Two-Phase Set} brings the option to remove an
+element. However, once an element has been removed, it cannot be added again to
+the set. The principle is to use two G-Sets, one for adding and another for
+removing (also known as \textit{tombstone set}). Removing an element is
+conditioned by being present in the set at source. The state-based variant is
+shown in Specification~\ref{alg:2p_set_state_based}. The payload consists of set
+$A$ for adding and set $R$ for removing. Adding or removing the same element
+twice or adding an already removed element has no effect.
+
+\textbf{U-Set}. If we guarantee that each element in the set is unique and that
+an $\textit{add}(e)$ is delivered before $\textit{remove}(e)$, the tombstone set
+becomes redundant and can be discarded because the causal delivery criteria
+is met. This new data structure is called \textit{U-Set}.
+
+\textbf{PN-Set}. An alternative solution is to associate with each element a
+CRDT counter (initially set to 0) which is increased when the element is added
+to the set and decreased when it is removed. If the counter is negative, it
+means that the element is not in the set, and \textit{add} operation will not
+have any effect. Thus a PN-Set has the anomaly that after adding a previously
+removed element to an empty set, it remains empty. This may not always be the
+intended semantics, despite the fact that PN-Set converges (it combines two
+CRDTS, a set and a counter).
+
+\begin{algorithm}[t]
+\small{
+	\floatname{algorithm}{Specification}
+	\caption{OR-Set (op-based)}
+ 	\label{alg:or_set_op_based}                       
+
+ 	\begin{algorithmic}[1]
+ 	  \State \Payload $S = \varnothing$
+ 	  \State \Query $lookup(e) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $\exists u : (e, u) \in S$
+ 	  
+ 	  \State \Update $add(e)$
+ 	  \State \hspace{\algorithmicindent} \Prepare $(e) : \text{tag}$
+ 	  \State \hspace{\algorithmicindent}\hspace{\algorithmicindent} \Let $\alpha = unique()$
+ 	  \State \hspace{\algorithmicindent}\hspace{\algorithmicindent} \Return $\alpha$
+ 	  \State \hspace{\algorithmicindent} \Effect $(e, \alpha)$ 
+ 	  \State \hspace{\algorithmicindent}\hspace{\algorithmicindent} $S \coloneqq S \cup \{(e, \alpha)\}$
+ 	  
+ 	  \State \Update $remove(e)$
+ 	  \State \hspace{\algorithmicindent} \Prepare $(e) : \text{set}$
+ 	  \State \hspace{\algorithmicindent}\hspace{\algorithmicindent} \Pre $lookup(e)$
+ 	  \State \hspace{\algorithmicindent}\hspace{\algorithmicindent} \Let $R = \{(e, u) \mid \exists u : (e, u) \in S\}$
+ 	  \State \hspace{\algorithmicindent}\hspace{\algorithmicindent} \Return $R$
+ 	  \State \hspace{\algorithmicindent} \Effect $(R)$ 
+ 	  \State \hspace{\algorithmicindent}\hspace{\algorithmicindent} \Pre $\forall (e, u) \in R : add(e, u)$ has been delivered
+ 	  \State \hspace{\algorithmicindent}\hspace{\algorithmicindent} $S \coloneqq S \setminus R$
+	\end{algorithmic}
+ }
+\end{algorithm}
+
+\begin{algorithm}[t]
+\small{
+	\floatname{algorithm}{Specification}
+	\caption{OR-Set (state-based)}
+ 	\label{alg:or_set_state_based}                       
+
+ 	\begin{algorithmic}[1]
+ 	  \State \Payload $A = \varnothing, R = \varnothing$
+ 	  \State \Query $lookup(e) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $\exists \alpha : (e, \alpha) \in A \land \nexists \beta : (a, \alpha, \beta) \in R$
+ 	  
+ 	  \State \Update $add(e)$
+ 	  \State \hspace{\algorithmicindent} \Let $\alpha = unique()$
+ 	  \State \hspace{\algorithmicindent} $A \coloneqq A \cup \{(e, \alpha)\}$
+ 	  
+ 	  \State \Update $remove(e)$
+ 	  \State \hspace{\algorithmicindent} \Pre $lookup(e)$
+ 	  \State \hspace{\algorithmicindent} \Let $\beta = unique()$
+ 	  \State \hspace{\algorithmicindent} \Let $R' = \{(e, \alpha, \beta) | \exists (e, \alpha) \in A\}$
+ 	  \State \hspace{\algorithmicindent} $R \coloneqq R \cup R'$
+ 	  
+ 	  \State \Compare $(S, T) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $S.A \subseteq T.A \land S.R \subseteq T.R$ 
+ 	  
+ 	  \State \Merge $(S, T) : \text{payload}$
+ 	  \State \hspace{\algorithmicindent} \Let $U.A = S.A \cup T.A$
+ 	  \State \hspace{\algorithmicindent} \Let $U.R = S.R \cup T.R$
+ 	  \State \hspace{\algorithmicindent} \Return $U$
+	\end{algorithmic}
+ }
+\end{algorithm}
+
+\textbf{OR-Set}. The previously described set structures, although practical,
+have counter-intuitive behaviors. For example, the 2P-Set does not allow adding
+an element after it has been removed, while the PN-Set has the problem showed
+above. The \textit{Observed-Removed Set}, introduced in
+\cite{preguica:inria-00445758}, is closer to the usual set semantics. The idea
+is to uniquely tag each added element. When removing an element, only associated
+tags observed at the source are removed. 
+
+Specification~\ref{alg:or_set_op_based} describes the usual supported operations
+for the op-based variant. The payload is a set of pairs
+$(\textit{e},\textit{tag})$. Method $\textit{add}(e)$ generates a new unique tag
+at source in the prepare-update phase and then sends it to all replicas which
+insert it into their payload in the effect-update phase. In this way, two
+additions of the same element are distinguished by their tags, but
+\textit{lookup} masks the duplicates. Method $\textit{remove}(e)$ gathers all
+tags associated with $e$ at source and sends them to all replicas which remove
+the corresponding pairs from their local payloads. Because a
+$\textit{remove}(e)$ will only remove locally observed elements, a concurrent
+$\textit{add}(e) \parallel \textit{remove}(e)$ will give precedence to
+$\textit{add}(e)$, in contrast to the 2P-Set.
+
+The state-based approach is presented in
+Specification~\ref{alg:or_set_state_based}. Here the payload contains two sets,
+$A$ for added elements and $R$ for removed elements. When adding an element $e$,
+like in the op-based approach, a new unique tag $\alpha$ is generated and the
+pair $(e, \alpha)$ is inserted into the $A$ set. The \textit{remove} operation
+again generates a unique tag $\beta$, associates it with all matching pairs from
+$A$, and stores the result in the $R$ set. To test if an element is in the
+OR-Set, we just need to verify if it is in $A$ and not in $R$.
