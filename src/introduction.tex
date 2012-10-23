@@ -25,18 +25,18 @@ but achieving consistency between replicas still remains an open issue.
 
 One attractive approach is to provide \textit{eventual
 consistency}~\cite{DBLP:journals/queue/Vogels08a,Saito:2005:OR:1057977.1057980},
-which allows any replica to apply updates locally and then to send the
-operations asynchronously to all the others. Thus, all replicas eventually apply
-all updates, possibly even in a different order. This weaker form of
-consistency, considered acceptable for some applications, has the advantage that
-data remains available when the network is partitioned. However, a complex
-background consensus algorithm for reconciling conflicting updates is generally
-needed~\cite{Terry:1995:MUC:224056.224070}, which makes current approaches
-ad-hoc and error-prone. Amazon's Shopping Cart constitutes a well-known example
-in this sense~\cite{DeCandia:2007:DAH:1294261.1294281}. Alternatively, several
-systems execute an update immediately and later discover that it conflicts with
-another~\cite{Terry:1995:MUC:224056.224070}. So they roll-back to resolve the
-conflict.
+which allows any replica to apply updates locally, while the operations are
+later sent asynchronously to all the others. In this way, all replicas
+eventually apply all updates, possibly even in a different order. With this
+weaker form of consistency, considered acceptable for some applications, data
+remains available when the network is partitioned. The downside is that a
+complex background consensus algorithm for reconciling conflicting updates is
+generally needed~\cite{Terry:1995:MUC:224056.224070}, which makes current
+approaches ad-hoc and error-prone. Amazon's Shopping Cart constitutes a
+well-known example in this sense~\cite{DeCandia:2007:DAH:1294261.1294281}.
+Alternatively, several systems execute an update immediately and later discover
+that it conflicts with another~\cite{Terry:1995:MUC:224056.224070}. So they
+roll-back to resolve the conflict.
 
 \textit{Conflict-free Replicated Data Types} (CRDTs) were designed specifically
 to solve this problem by employing a new type of consistency, \textit{strong
@@ -48,13 +48,14 @@ constraints, not all data structures are suitable for it.
 
 A strong motivation to study this concept comes from current demands to support
 frequent writes of runtime data to replicated, distributed stores, and to
-provide low latencies for reads. Because a consensus algorithm for conflicting
-updates would become a bottleneck, CRDTs are very attractive, as a replica may
-execute any operation locally. Consistency is achieved later during a
-background asynchronous phase in which all replicas eventually apply all
-updates. A second benefit is given by the composability nature of CRDTs: simple
-structures (counters, shared mutable variables, sets) can constitute building
-blocks in forming more complex ones, such as maps or graphs.
+provide low latencies for reads. Because a consensus algorithm for conflict
+resolution would become a bottleneck, CRDTs are very attractive, as all updates
+are persistent and can immediately be applied locally at the source replica.
+Consistency is achieved later, during a background asynchronous phase in which
+all replicas eventually apply all updates. A second benefit is given by the
+composability nature of CRDTs: simple structures (counters, shared mutable
+variables, sets) can constitute building blocks in forming more complex ones,
+such as maps or graphs.
 
 The focus of this paper is a particular CRDT: the \textit{set} data type. To
 achieve a highly scalable replicated set, the following contributions are made:
@@ -69,8 +70,9 @@ achieve a highly scalable replicated set, the following contributions are made:
   This solves both the problem of data growth by achieving higher scalability
   and the problem of performance bottleneck by sharing the load. Thus, a second
   contribution is an extension to the set specification to support per-replica
-  partitioning capability.
-  \item Since CRDTs usually lead to an increase in database size with each
-  update operation, an asynchronous garbage collection process to reclaim
-  obsolete elements from the set is discussed.
+  partitioning capability, or \textit{sharding}.
+  \item CRDTs usually lead to an increase in database size with each update
+  operation. Also, we want to add a feature for limited-lifetime elements:
+  discard elements older than a given time value. We discuss an asynchronous
+  garbage collection mechanism which solves both these issues.
 \end{itemize}
