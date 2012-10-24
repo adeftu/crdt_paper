@@ -1,2 +1,92 @@
 \section{A Delta-based Synchronization Algorithm}
 \label{sec:delta_sync}
+
+As seen in Section~\ref{sec:existing_sets}, there are different ways of
+constructing a CRDT set data structure.  OR-Sets are very intuitive and do not
+suffer from the semantics anomalies encountered in the other set specifications.
+Our goal is therefore to have the robustness of state-based OR-Set corroborated
+with the transfer efficiency of the op-based one. This section introduces our
+first contribution: improvement to the state-based OR-Set specification to
+transfer only deltas between replicas instead of full states, called
+\textit{delta-based synchronization} (\textit{merging})
+algorithm\footnote{Synchronization here has the meaning of updates propagation
+between replicas, and not that of a consensus required in the case of strong
+consistency model.}, in Specification~\ref{alg:or_set_with_deltas}.
+
+\begin{algorithm}[t]
+\small{
+	\floatname{algorithm}{Specification}
+	\caption{OR-Set with delta-based synchronization}
+ 	\label{alg:or_set_with_deltas}                       
+
+ 	\begin{algorithmic}[1]
+ 	  \State \Payload $A = \varnothing, R = \varnothing, T = [\,]$
+ 	  
+ 	  \State \Query $lookup(e) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $\exists (e, t, r) \in A \land \nexists (e, t, r, t', r') \in R$
+ 	  
+ 	  \State \Update $add(e)$
+ 	  \State \hspace{\algorithmicindent} \Let $r = replica()$
+ 	  \State \hspace{\algorithmicindent} \Let $t = T[r] + 1$
+ 	  \State \hspace{\algorithmicindent} $A \coloneqq A \cup \{(e, t, r)\}$
+ 	  \State \hspace{\algorithmicindent} $T[r] \coloneqq  t$
+
+ 	  \State \Update $remove(e)$
+ 	  \State \hspace{\algorithmicindent} \Pre $lookup(e)$
+ 	  \State \hspace{\algorithmicindent} \Let $r' = replica()$
+ 	  \State \hspace{\algorithmicindent} \Let $t' = T[r'] + 1$
+ 	  \State \hspace{\algorithmicindent} $R \coloneqq R \cup \{(e, t, r, t', r') \mid \exists (e, t, r) \in A\}$
+ 	  \State \hspace{\algorithmicindent} $T[r'] \coloneqq  t'$
+
+ 	  \State \Compare $(S_{1}, S_{2}) : \text{boolean}$
+ 	  \State \hspace{\algorithmicindent} \Return $S_{1}.A \subseteq S_{2}.A \land S_{1}.R \subseteq S_{2}.R \land S_{1}.T[i] \leq S_{2}.T[i], \forall i$
+
+ 	  \State \Merge $(S_{1}, S_{2}) : \text{payload}$
+ 	  \State \hspace{\algorithmicindent} \Let $A' = \{(e, t, r) \in S_{2}.A \mid S_{1}.T[r] < t\}$
+ 	  \State \hspace{\algorithmicindent} \Let $R' = \{(e, t, r, t', r') \in S_{2}.R \mid S_{1}.T[r'] < t'\}$
+ 	  \State \hspace{\algorithmicindent} \Let $P.A = S_{1}.A \cup A'$
+ 	  \State \hspace{\algorithmicindent} \Let $P.R = S_{1}.R \cup R'$
+ 	  \State \hspace{\algorithmicindent} \Let $P.T = max(S_{1}.T, S_{2}.T)$
+ 	  \State \hspace{\algorithmicindent} \Return $P$
+	\end{algorithmic}
+ }
+\end{algorithm}
+
+In addition to the original OR-Set, the payload now has also a \textit{timestamp
+vector} $T$ which has as many components as there are replicas and for which
+$T[r]$ records the latest known version of replica $r$. For this purpose, it is
+assumed that each replica has a unique identifier that can be retrieved through
+the function \textit{replica} and that $T$ can be indexed with this identifier.
+Adding a new element $e$ at replica $r$ increments the corresponding component
+$T[r]$ to obtain $t$ and inserts the tuple $(e, t, r)$ into set $A$. Compared to
+the basic OR-Set, the change was essentially to split the tag which uniquely
+identified each element into the pair $(t, r)$. In this way, the elements still
+remain tagged, but now we also have the information about the partial order of
+updates occurring at each replica, i.e. we know that tuple $(e, t, r)$ was added
+before tuple $(e', t', r)$ at replica $r$ if $t < t'$. Removing an element uses
+the same principle. Being an OR-Set data type, only locally observed elements at
+the source are removed. The logical clock corresponding to the replica is
+increased again to keep track of this update. Looking up an element $e$ in the
+set translates to verifying if there is an added tuple containing $e$ and does
+not exist a corresponding remove tuple. In order to merge, we first send $T$ to
+the other side, compute here the missing updates, i.e. tuples whose timestamps
+are greater than the logical clock, send them back together with the remote $T$,
+and finally append the updates and update the local timestamps. Therefore, $T$
+acts as a version vector~\cite{Parker:1983:DMI:1313337.1313753}, which
+guarantees the partial order between updates. Also, due to the transitivity
+property of the version vectors, each $\textit{merge}(S_{1}, S_{2})$ includes
+not only the updates originated at $S_{2}$ but also those from $S_{3}$ which
+were pulled by $S_{2}$ but not by $S_{1}$.
+
+\begin{proof}[Proof that delta-based synchronization maintains the CRDT
+properties] 
+We consider the partial order $(S, \sqsubseteq)$, where $\sqsubseteq$ is given
+by the \textit{compare} method in the specification. Both \textit{add} and
+\textit{remove} methods add elements to the payload and increment $T$ and
+therefore advance the state in the partial order. Furthermore, for any two sets
+$X$ and $Y$, it is known that the following holds: $X \cup Y = X \cup (Y
+\setminus X)$. So \textit{merge} basically computes the union of the added and,
+respectively, removed sets using the right-hand side formula and the maximum of
+the two timestamp vectors. Hence we have $\textit{merge}(S_{1}, S_{2}) = S_{1}
+\sqcup S_{2}$ (LUB) which concludes the proof.
+\end{proof}
