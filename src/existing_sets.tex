@@ -99,8 +99,8 @@ to the set and decreased when it is removed. If the counter is negative, it
 means that the element is not in the set, and \textit{add} operation will not
 have any effect. Thus a PN-Set has the anomaly that after adding a previously
 removed element to an empty set, it remains empty. This may not always be the
-intended semantics, despite the fact that PN-Set converges (it combines two
-CRDTS, a set and a counter).
+intended semantics, despite the fact that PN-Set converges: it combines two
+CRDTs, a set and a counter.
 
 \begin{algorithm}[t]
 \small{
@@ -168,9 +168,9 @@ CRDTS, a set and a counter).
 have counter-intuitive behaviors. For example, the 2P-Set does not allow adding
 an element after it has been removed, while the PN-Set has the problem showed
 above. The \textit{Observed-Removed Set}, introduced in
-\cite{preguica:inria-00445758}, is closer to the usual set semantics. The idea
-is to uniquely tag each added element. When removing an element, only associated
-tags observed at the source are removed. 
+\cite{preguica:inria-00445758}, is closer to the usual set semantics. The new
+approach is to uniquely tag each added element. When removing an element, only
+associated tags observed at the source are removed. 
 
 Specification~\ref{alg:or_set_op_based} describes the usual supported operations
 for the op-based variant. The payload is a set of pairs

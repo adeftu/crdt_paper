@@ -3,7 +3,7 @@
 
 Achieving consistency is one of the hardest problems in distributed
 systems. What we ideally want to have is replicas which are \textit{strongly
-consistent}, meaning that any update happening at one replica is made
+consistent}, in the sense that any update happening at one replica is made
 instantaneously visible at all the others. Because this approach implies
 synchronization after each update operation, essentially leading to a serial
 execution, it is rarely used in practice. \textit{Eventual
@@ -16,10 +16,11 @@ roll-backs~\cite{Terry:1995:MUC:224056.224070}.
 
 \textit{Conflict-free Replicated Data Types} (CRDTs) introduce the concept of
 \textit{Strong Eventual Consistency}
-(SEC)~\cite{Shapiro:2011:CRD:2050613.2050642}. The idea is to design the data
-structures such that all updates have deterministic outcome, and thus they can 
-be made immediately persistent. In this way, conflicts are altogether avoided.
-There are two styles for defining CRDTs. 
+(SEC)~\cite{Shapiro:2011:CRD:2050613.2050642}. The idea is to design data
+structures, such that all updates have deterministic outcome and thus they can
+be made immediately persistent. In this way, conflicts are altogether avoided
+and a consensus or roll-backs are not longer necessary. There are two
+styles for defining CRDTs.
 
 \textbf{State-based replication}. In this approach, each update operation is
 executed entirely at the source replica, modifying its state. Subsequently,
