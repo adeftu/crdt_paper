@@ -1,2 +1,31 @@
 \section{Conclusions}
 \label{sec:conclusions}
+
+Achieving consistency in large-scale distributed systems is not an easy task. To
+make things more difficult, designers need to also ensure high-throughput,
+low-latencies accesses to the databases. However, building reliable distributed
+systems demands trade-offs between consistency and availability as stated by the
+CAP theorem~\cite{Gilbert:2002:BCF:564585.564601}. Eventual consistency is a
+technique of compromise, widely adopted, but lacking a rigorous theoretical
+foundation which makes current approaches ad-hoc and
+error-prone~\cite{DeCandia:2007:DAH:1294261.1294281}.
+
+The concept of CRDTs defines replicated data types that have mathematical
+properties conferring them a form of eventual consistency, strong eventual
+consistency. This model can be described from two equivalent perspectives:
+a) state-based: object replicas apply updates locally and later exchange and
+merge their states, and b) operation-based: update operations are distributed
+among replicas over a reliable broadcast communication channel. Both approaches
+guarantee convergence towards a common state without application-level conflict
+resolutions, roll-backs, or consensus among
+replicas~\cite{Terry:1995:MUC:224056.224070}. Because this model imposes strong
+constraints on the type specification, it is not universal though.
+
+In this paper we focused on designs for conflict-free replicated sets and gave
+number of practical examples. We introduced two improvements to the original
+OR-Set specification: an algorithm for efficient delta-based synchronization and
+an extension for replica sharding. Lastly, we proposed a garbage collection
+mechanism to support lifetime-limited elements and to alleviate the problem of
+unbounded database growth. Based on this type, more complex structures can be
+built. Maps can be implemented as sets of named variables and graphs can include
+two sets: one for vertices and another for edges.
