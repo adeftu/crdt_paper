@@ -19,9 +19,9 @@ Any $(e, t, rc, rs) \in A$ in the SOR-Set will be referred to as an
 \textit{add} and \textit{remove} methods, or through the synchronization
 process. Lookup semantics states that $\textit{lookup}(e)$ should return
 \textit{true} if $e$ is in the SOR-Set and \textit{false} otherwise. The
-following theorem on tuple expiration can now be formulated.
+following theorem on tuples expiration can now be formulated.
 
-\begin{theorem}[\textbf{Tuple expiration}]
+\begin{theorem}[\textbf{Tuples expiration}]
 \begin{itshape}
 If, at any given shard, the tuples corresponding to any element $e$,
 \textit{ADD(e)} and \textit{RMV(e)}, are expired in the same order in which they
@@ -81,7 +81,7 @@ shards evidently does not imply that there is a global time point when all
 copies of one tuple are expired simultaneously. In fact, copies of the tuples in
 local cluster will expire shortly after the original ones in remote cluster have
 expired. However, this does not invalidate the lookup semantics according to the
-tuple expiration theorem.
+tuples expiration theorem.
 
 \begin{proof}[Proof that garbage collection maintains the CRDT properties]
 We consider first the case when no sharding is used. A new partial order can be

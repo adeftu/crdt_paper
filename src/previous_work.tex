@@ -34,8 +34,8 @@ CRDTs.
 
 Several designs of replicated sets have been proposed, but many of them present
 anomalies. Amazon's Dynamo shopping
-cart~\cite{DeCandia:2007:DAH:1294261.1294281} uses shared mutable variables in
-its implementation. It takes the union of concurrent assignments, multiple values
+cart~\cite{DeCandia:2007:DAH:1294261.1294281} uses registers in its
+implementation. It takes the union of concurrent assignments, multiple values
 are later reduced to a single one. The problem is that a removed element can
 reappear. In a 2P-Set~\cite{Wuu:1984:ESR:800222.806750}, adding an element after
 it has been removed has not effect. Furthermore, this design imposes

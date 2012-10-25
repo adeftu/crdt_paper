@@ -32,7 +32,7 @@ weaker form of consistency, considered acceptable for some applications, data
 remains available when the network is partitioned. The downside is that a
 complex background consensus algorithm for reconciling conflicting updates is
 generally needed~\cite{Terry:1995:MUC:224056.224070}, which makes current
-approaches ad-hoc and error-prone. Amazon's Shopping Cart constitutes a
+approaches ad-hoc and error-prone. Amazon's shopping cart constitutes a
 well-known example in this sense~\cite{DeCandia:2007:DAH:1294261.1294281}.
 Alternatively, several systems execute an update immediately and later discover
 that it conflicts with another~\cite{Terry:1995:MUC:224056.224070}. So they
@@ -73,6 +73,6 @@ achieve a highly scalable replicated set, the following contributions are made:
   partitioning capability, or \textit{sharding}.
   \item CRDTs usually lead to an increase in database size with each update
   operation. Also, we want to add a feature for limited-lifetime elements:
-  discard elements older than a given time value. We discuss an asynchronous
+  discarding elements older than a given time value. We discuss an asynchronous
   garbage collection mechanism which solves both these issues.
 \end{itemize}

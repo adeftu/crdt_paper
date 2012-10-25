@@ -17,7 +17,7 @@ roll-backs~\cite{Terry:1995:MUC:224056.224070}.
 \textit{Conflict-free Replicated Data Types} (CRDTs) introduce the concept of
 \textit{Strong Eventual Consistency}
 (SEC)~\cite{Shapiro:2011:CRD:2050613.2050642}. The idea is to design data
-structures, such that all updates have deterministic outcome and thus they can
+structures, such that all updates have a deterministic outcome and thus they can
 be made immediately persistent. In this way, conflicts are altogether avoided
 and a consensus or roll-backs are not longer necessary. There are two
 styles for defining CRDTs.
@@ -68,9 +68,9 @@ intermediary results from the first phase to all replicas, including the source.
 Here, in the second phase, called \textit{downstream} or \textit{effect-update},
 the operation is executed immediately at source and asynchronously at all other
 replicas if a downstream precondition is met\footnote{An example of such
-precondition could be that an element is allowed to be removed from a replicated
-set only if it is present in the set at source.}. This second phase cannot
-return results and has to execute atomically.
+precondition could be to allow the removal of an element from a replicated set
+only if it is present in the set at source.}. This second phase cannot return
+results and has to execute atomically.
 
 An update $u$ is said to \textit{happen-before} an update $u'$ at some replica,
 denoted by $u \rightarrow u'$, if $u$ has been applied when $u'$ executes. Two
