@@ -1,2 +1,34 @@
 \section{Comparison with Previous Work}
 \label{sec:previous_work}
+
+The fundamental principles on database replication are laid out
+in~\cite{lindsay} and a number of techniques are discussed there to achieve
+consistency. The traditional \textit{strong consistency} approach imposes a
+global total order on updates to serialize
+them~\cite{Lamport:1978:TCO:359545.359563}. This conflicts with availability and
+partition-tolerance~\cite{Gilbert:2002:BCF:564585.564601} and leads to
+performance and scalability bottlenecks. \textit{Sequential consistency} is
+another model, weaker than strong consistency, but undecidable in
+practice~\cite{Qadeer:2003:VSC:939835.940001}. A survey on other models is
+presented in~\cite{Mosberger:1993:MCM:160551.160553}.
+
+Techniques for achieving eventual consistency for large-scale distributed
+systems have been an active focus point in recent research. This is mostly due
+to the explosion of Internet-based and peer-to-peer services. However, the
+origins of the principles behind CRDTs can be found in the apparent unrelated
+area of file systems. The state-based approach was introduced for register-like
+objects, where the only operation is assignment. It is widely used in
+NFS~\cite{Sandberg85designand} and AFS~\cite{Howard:1988:SPD:35037.35059} file
+systems and in key-value stores such as Amazon's
+Dynamo~\cite{DeCandia:2007:DAH:1294261.1294281}. The mathematical foundations
+were laid by Baquero and Moura~\cite{scadt4} and later extended by Shapiro and
+Pregui\c{c}a in their work on Treedoc~\cite{Preguica:2009:CRD:1584339.1584604}
+in order to support the operation-based approach, thus coining the term of CRDT.
+Examples of implementations for this second approach are found in Bayou's
+anti-entropy protocol~\cite{Petersen:1997:FUP:268998.266711} and the IceCube
+cooperative system~\cite{preguica:inria-00445758}.
+
+Later, a formal definition and rigorous system model for CRDT were published
+in \cite{shapiro:inria-00555588} and \cite{Shapiro:2011:CRD:2050613.2050642}.
+These are the first works to engage a comprehensive and systematic study on
+CRDTs. 
