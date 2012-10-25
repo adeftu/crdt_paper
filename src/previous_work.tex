@@ -26,9 +26,19 @@ Pregui\c{c}a in their work on Treedoc~\cite{Preguica:2009:CRD:1584339.1584604}
 in order to support the operation-based approach, thus coining the term of CRDT.
 Examples of implementations for this second approach are found in Bayou's
 anti-entropy protocol~\cite{Petersen:1997:FUP:268998.266711} and the IceCube
-cooperative system~\cite{preguica:inria-00445758}.
-
-Later, a formal definition and rigorous system model for CRDT were published
-in \cite{shapiro:inria-00555588} and \cite{Shapiro:2011:CRD:2050613.2050642}.
+cooperative system~\cite{preguica:inria-00445758}. Later, a formal definition
+and rigorous system model for CRDT were published in
+\cite{shapiro:inria-00555588} and \cite{Shapiro:2011:CRD:2050613.2050642}.
 These are the first works to engage a comprehensive and systematic study on
-CRDTs. 
+CRDTs.
+
+Several designs of replicated sets have been proposed, but many of them present
+anomalies. Amazon's Dynamo shopping
+cart~\cite{DeCandia:2007:DAH:1294261.1294281} uses shared mutable variables in
+its implementation. It takes the union of concurrent assignments, multiple values
+are later reduced to a single one. The problem is that a removed element can
+reappear. In a 2P-Set~\cite{Wuu:1984:ESR:800222.806750}, adding an element after
+it has been removed has not effect. Furthermore, this design imposes
+synchronization for reclaiming the tombstones. In
+Section~\ref{sec:existing_sets} we gave more examples for replicated sets and
+concluded that the OR-Set behaves intuitively.
