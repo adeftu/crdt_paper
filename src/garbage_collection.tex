@@ -21,13 +21,13 @@ process. Lookup semantics states that $\textit{lookup}(e)$ should return
 \textit{true} if $e$ is in the SOR-Set and \textit{false} otherwise. The
 following theorem on tuples expiration can now be formulated.
 
-\begin{theorem}[\textbf{Tuples expiration}]
+\begin{theorem*}[\textbf{Tuples expiration}]
 \begin{itshape}
 If, at any given shard, the tuples corresponding to any element $e$,
 \textit{ADD(e)} and \textit{RMV(e)}, are expired in the same order in which they
 were originally inserted, then the lookup semantics are preserved.
 \end{itshape}
-\end{theorem}
+\end{theorem*}
 
 \begin{proof}
 Let us first consider update operations occurring at one replica with no
