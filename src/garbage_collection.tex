@@ -57,21 +57,30 @@ sequential $RMV(e) \rightarrow ADD(e)$.
 \end{proof}
 
 The following changes could be made to the SOR-Set specification in order to
-include an automatic garbage collection while maintaining the lookup semantics. 
-We associate a \textit{time-to-live} (TTL) value with each tuple when it is
-inserted into the corresponding set through an \textit{add} or \textit{remove}.
-This value represents the time interval from the moment it was inserted after
-which the tuple will expire. In this way, tuples older than a specified
-period are considered to be no longer relevant and can be safely discarded. Data
-stores such as Redis~\cite{redis} or Cassandra~\cite{cassandra} offer support
-for setting TTL attributes to records and automatic removal for expired ones.
-Otherwise, a simple periodic scan-and-remove process on the database can be
-used. To ensure that tuples corresponding to $e$ expire in the order in which
-they were added, it is sufficient to stamp them with the same value $TTL(e)$.
-Also, when copying the tuples to other shards, their remaining TTL should be
-preserved, i.e. the current TTL at the remote replica is transferred together
-with the tuple to the local replica. By doing this, tuples will expire at the
-local replica in the same order as they do at the remote one.
+include an automatic, asynchronous garbage collection while maintaining the
+lookup semantics. We associate a \textit{time-to-live} (TTL) value with each
+tuple when it is inserted into the corresponding set through an \textit{add} or
+\textit{remove}. This value represents the time interval from the moment it was
+inserted after which the tuple will expire. In this way, tuples older than a
+specified period are considered to be no longer relevant and can be safely
+discarded. Data stores such as Redis~\cite{redis} or Cassandra~\cite{cassandra}
+offer support for setting TTL attributes to records and automatic removal for
+expired ones. Otherwise, a simple periodic scan-and-remove process on the
+database can be used. To ensure that tuples corresponding to $e$ expire in the
+order in which they were added, first, it is sufficient to stamp them with the
+same value $TTL(e)$. Tuples corresponding to different values may be stamped
+with different TTLs. Second, as shown in Fig.~\ref{fig:garbage-collection}, when
+copying the tuples to other shards, their remaining TTL should be preserved,
+i.e. the current TTL at the remote replica is transferred together with the
+tuple to the local replica. By doing this, tuples will expire at the local
+replica in the same order as they do at the remote one.
+
+\begin{figure}[b]
+  \centering
+  \includegraphics[width=0.6\linewidth]{garbage-collection}
+  \caption{Preserving TTL on updates propagation}
+  \label{fig:garbage-collection}
+\end{figure}
 
 We note that it is not a requirement for having the same physical clock speed on
 all machines or for having their clocks periodically synchronized. What is

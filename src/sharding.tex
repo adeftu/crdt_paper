@@ -4,14 +4,14 @@
 The next improvement to the OR-Set is partitioning, or sharding, a replica into
 many disjunctive subsets which can be stored individually on different machines.
 Each replicated set can reside in a cluster, as illustrated in
-Figure~\ref{fig:sharding_meaning}. Here Replica~1 is sharded in 3 subsets,
+Fig.~\ref{fig:sharding_meaning}. Here Replica~1 is sharded in 3 subsets,
 Replica~2 is sharded in 2 subsets, while Replica~3 is stored entirely on one
 machine. This OR-Set data type where each replica set is sharded into subsets
 will be referred to as \textbf{Sharded OR-Set} (\textbf{SOR-Set}).
 
 \begin{figure}[b]
   \centering
-  \includegraphics[width=0.6\linewidth]{sharding-meaning}
+  \includegraphics[width=0.7\linewidth]{sharding-meaning}
   \caption{Sharding of OR-Sets}
   \label{fig:sharding_meaning}
 \end{figure}
@@ -142,7 +142,8 @@ include the missing updates plus some of the already fetched ones. For the
 remote cluster, an unreachable shard has the same consequence: $T_{x}^{j}
 \coloneqq max(T_{x}^{j}, \tilde{T}_{y})$ will set smaller values in
 $T_{x}^{j}[rc_{y}]$ and missed updates will be fetched with the next merge after
-the shard restores.
+the shard restores. Optionally, a master-slave replication scheme can be used to
+ensure fault-tolerance for any shard.
 
 \begin{proof}[Proof that sharding maintains the CRDT properties]
 Consider a replica state as $s_{i} = (A_{i}, R_{i}, \tilde{T}_{i})$, where

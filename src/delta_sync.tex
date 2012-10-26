@@ -69,14 +69,15 @@ the source are removed. The logical clock corresponding to the replica is
 increased again to keep track of this update. Looking up an element $e$ in the
 set translates to verifying if there is an added tuple containing $e$ and does
 not exist a corresponding remove tuple. In order to merge, we first send $T$ to
-the other side, compute here the missing updates, i.e. tuples whose timestamps
-are greater than the logical clock, send them back together with the remote $T$,
-and finally append the updates and update the local timestamps. Therefore, $T$
-acts as a version vector~\cite{Parker:1983:DMI:1313337.1313753}, which
-guarantees the partial order between updates. Also, due to the transitivity
-property of the version vectors, each $\textit{merge}(S_{1}, S_{2})$ includes
-not only the updates originated at $S_{2}$ but also those from $S_{3}$ which
-were pulled by $S_{2}$ but not by $S_{1}$.
+the other side, compute here the missing updates in $A'$ and $R'$, i.e. tuples
+whose timestamps are greater than the logical clock, send them back together
+with the remote $T$, and finally append the updates and update the local
+timestamps. Therefore, $T$ acts as a version
+vector~\cite{Parker:1983:DMI:1313337.1313753}, which guarantees the partial
+order between updates. Also, due to the transitivity property of the version
+vectors, each $\textit{merge}(S_{1}, S_{2})$ includes not only the updates
+originated at $S_{2}$ but also those from $S_{3}$ which were pulled by $S_{2}$
+but not by $S_{1}$.
 
 \begin{proof}[Proof that delta-based synchronization maintains the CRDT
 properties] 

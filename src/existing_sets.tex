@@ -150,8 +150,7 @@ CRDTs, a set and a counter.
  	  \State \Update $remove(e)$
  	  \State \hspace{\algorithmicindent} \Pre $lookup(e)$
  	  \State \hspace{\algorithmicindent} \Let $\beta = unique()$
- 	  \State \hspace{\algorithmicindent} \Let $R' = \{(e, \alpha, \beta) | \exists (e, \alpha) \in A\}$
- 	  \State \hspace{\algorithmicindent} $R \coloneqq R \cup R'$
+ 	  \State \hspace{\algorithmicindent} $R \coloneqq R \cup \{(e, \alpha, \beta) | \exists (e, \alpha) \in A\}$
  	  
  	  \State \Compare $(S, T) : \text{boolean}$
  	  \State \hspace{\algorithmicindent} \Return $S.A \subseteq T.A \land S.R \subseteq T.R$ 
