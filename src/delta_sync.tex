@@ -72,12 +72,17 @@ not exist a corresponding remove tuple. In order to merge, we first send $T$ to
 the other side, compute here the missing updates in $A'$ and $R'$, i.e. tuples
 whose timestamps are greater than the logical clock, send them back together
 with the remote $T$, and finally append the updates and update the local
-timestamps. Therefore, $T$ acts as a version
-vector~\cite{Parker:1983:DMI:1313337.1313753}, which guarantees the partial
-order between updates. Also, due to the transitivity property of the version
-vectors, each $\textit{merge}(S_{1}, S_{2})$ includes not only the updates
-originated at $S_{2}$ but also those from $S_{3}$ which were pulled by $S_{2}$
-but not by $S_{1}$.
+timestamps. 
+
+Therefore, $T$ acts as a version vector~\cite{Parker:1983:DMI:1313337.1313753},
+which guarantees the partial order between updates. Also, due to the
+transitivity property of the version vectors, each $\textit{merge}(S_{1},
+S_{2})$ includes not only the updates originated at $S_{2}$ but also those from
+$S_{3}$ which were pulled by $S_{2}$ but not by $S_{1}$. One limitation of this
+approach is that indexing $T$ requires a static mapping from a global replica
+identifier to an integer. Dynamic version vector maintenance using interval tree
+clocks~\cite{Almeida:2008:ITC:1496310.1496330} may alleviate this problem
+however.
 
 \begin{proof}[Proof that delta-based synchronization maintains the CRDT
 properties] 
