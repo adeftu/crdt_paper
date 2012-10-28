@@ -56,6 +56,13 @@ expect. ii) $RMV(e) \leadsto ADD(e)$. Similarly, the case reduces to the
 sequential $RMV(e) \rightarrow ADD(e)$.
 \end{proof}
 
+\begin{figure}[b!]
+  \centering
+  \includegraphics[width=0.6\linewidth]{garbage-collection}
+  \caption{Preserving TTL on updates propagation}
+  \label{fig:garbage-collection}
+\end{figure}
+
 The following changes could be made to the SOR-Set specification in order to
 include an automatic, asynchronous garbage collection while maintaining the
 lookup semantics. We associate a \textit{time-to-live} (TTL) value with each
@@ -74,13 +81,6 @@ copying the tuples to other shards, their remaining TTL should be preserved,
 i.e. the current TTL at the remote replica is transferred together with the
 tuple to the local replica. By doing this, tuples will expire at the local
 replica in the same order as they do at the remote one.
-
-\begin{figure}[b]
-  \centering
-  \includegraphics[width=0.6\linewidth]{garbage-collection}
-  \caption{Preserving TTL on updates propagation}
-  \label{fig:garbage-collection}
-\end{figure}
 
 We note that it is not a requirement for having the same physical clock speed on
 all machines or for having their clocks periodically synchronized. What is

@@ -46,16 +46,25 @@ operations and without having to deal with consensus, complex conflict
 resolution, or roll-backs. However, since this model imposes some mathematical
 constraints, not all data structures are suitable for it.
 
-A strong motivation to study this concept comes from current demands to support
-frequent writes of runtime data to replicated, distributed stores, and to
-provide low latencies for reads. Because a consensus algorithm for conflict
-resolution would become a bottleneck, CRDTs are very attractive, as all updates
-are persistent and can immediately be applied locally at the source replica.
-Consistency is achieved later, during a background asynchronous phase in which
-all replicas eventually apply all updates. A second benefit is given by the
-composability nature of CRDTs: simple structures (counters, shared mutable
-variables, sets) can constitute building blocks in forming more complex ones,
-such as maps or graphs.
+CRDTs consist in ubiquitous basic structures, e.g. counters, shared mutable
+variables, or sets, which can be used as building blocks in forming more complex
+ones, like maps or graphs. For a practical use-case scenario, consider how an
+event tracking mechanism can be implemented in order to prevent attacks on an
+Internet service provider. Filters are used to keep track and to limit the
+number of events allowed for a given IP address or account, such as login
+attempts, password changes, emails sent, and so on. A replicated counter can
+store the number of login attempts from one IP address, while a replicated set
+the corresponding unique passwords tried. Since this case requires high
+throughput for writes of runtime data and low latencies for reads,
+synchronization or conflict resolutions are not acceptable. CRDTs are very
+attractive, as all updates are persistent and can immediately be applied locally
+at the source replica. Consistency is achieved later, during a background
+asynchronous phase in which all replicas eventually apply all updates.
+Furthermore, the composability nature of CRDTs allows this use case to be easily
+extended to a graph-like structure: store relations among various events and
+entities, such as account, IP addresses, aliases, and login attempts in order to
+better detect malicious behaviour with heuristic algorithms. Another application
+of the CRDTs is cooperative editing~\cite{Preguica:2009:CRD:1584339.1584604}.
 
 The focus of this paper is a particular CRDT: the \textit{set} data type. To
 achieve a highly scalable replicated set, the following contributions are made:
