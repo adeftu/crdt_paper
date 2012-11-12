@@ -1,30 +1,3 @@
-\section{Existing Replicated Set Designs}
-\label{sec:existing_sets}
-
-The set data type is a pervasive abstraction, used either directly or as a
-building block in more complex types, such as maps or graphs. The supported
-update operations are \textit{add} and \textit{remove} which add and,
-respectively, remove an element to and from the set. These operations do not
-commute and, therefore, a CRDT set will be only an approximation to the
-sequential specification of a set. Many designs for replicated sets have been
-proposed~\cite{shapiro:inria-00555588} and they mainly differ in which operation
-takes precedence in a $\textit{add}(e) \parallel \textit{remove}(e)$ situation.
-In this section we give examples of some specifications and argue that the
-OR-Set does not present any anomaly as the others do, which could lead to a
-counter-intuitive behavior.
-
-\textbf{G-Set}. The first CRDT implementation of a set, \textit{Grow-Only Set},
-allows for \textit{add} and \textit{lookup} operations. Both state-based and
-op-based versions have a set as payload. To prove that this is a CmRDT it is
-easy to see that $\textit{add}(e)$ is commutative, being based on a set-union
-operation between the payload and $\{e\}$. In the state-based approach, as shown
-in Specification~\ref{alg:g_set_state_based}, the partial order on states $S$
-and $T$ is given by $S \sqsubseteq T \iff S \subseteq T$. Then, the
-\textit{merge} operation defined as $\textit{merge}(S,T) = S \cup T$ computes
-the LUB in the monotonic semilattice $(S, \sqsubseteq)$. And so, G-Set is also a
-CvRDT\footnote{For proofs on the rest of the constructs, the reader is
-referred to \cite{shapiro:inria-00555588}.}.
-
 \begin{algorithm}[t]
 \small{
 	\floatname{algorithm}{Specification}
@@ -48,7 +21,6 @@ referred to \cite{shapiro:inria-00555588}.}.
 	\end{algorithmic}
  }
 \end{algorithm}
-
 \begin{algorithm}[t]
 \small{
 	\floatname{algorithm}{Specification}
@@ -79,28 +51,20 @@ referred to \cite{shapiro:inria-00555588}.}.
  }
 \end{algorithm}
 
-\textbf{2P-Set}. A \textit{Two-Phase Set} brings the option to remove an
-element. However, once an element has been removed, it cannot be added again to
-the set. The principle is to use two G-Sets, one for adding and another for
-removing (also known as \textit{tombstone set}). Removing an element is
-conditioned by being present in the set at source. The state-based variant is
-shown in Specification~\ref{alg:2p_set_state_based}. The payload consists of set
-$A$ for adding and set $R$ for removing. Adding or removing the same element
-twice or adding an already removed element has no effect.
+\section{Existing Replicated Set Designs}
+\label{sec:existing_sets}
 
-\textbf{U-Set}. If we guarantee that each element in the set is unique and that
-an $\textit{add}(e)$ is delivered before $\textit{remove}(e)$, the tombstone set
-becomes redundant and can be discarded because the causal delivery criteria
-is met. This new data structure is called \textit{U-Set}.
-
-\textbf{PN-Set}. An alternative solution is to associate with each element a
-CRDT counter (initially set to 0) which is increased when the element is added
-to the set and decreased when it is removed. If the counter is negative, it
-means that the element is not in the set, and \textit{add} operation will not
-have any effect. Thus a PN-Set has the anomaly that after adding a previously
-removed element to an empty set, it remains empty. This may not always be the
-intended semantics, despite the fact that PN-Set converges: it combines two
-CRDTs, a set and a counter.
+The set data type is a pervasive abstraction, used either directly or as a
+building block in more complex types, such as maps or graphs. The supported
+update operations are \textit{add} and \textit{remove} which add and,
+respectively, remove an element to and from the set. These operations do not
+commute and, therefore, a CRDT set will be only an approximation to the
+sequential specification of a set. Many designs for replicated sets have been
+proposed~\cite{shapiro:inria-00555588} and they mainly differ in which operation
+takes precedence in a $\textit{add}(e) \parallel \textit{remove}(e)$ situation.
+In this section we give examples of some specifications and argue that the
+OR-Set does not present any anomaly as the others do, which could lead to a
+counter-intuitive behavior.
 
 \begin{algorithm}[t]
 \small{
@@ -131,7 +95,6 @@ CRDTs, a set and a counter.
 	\end{algorithmic}
  }
 \end{algorithm}
-
 \begin{algorithm}[t]
 \small{
 	\floatname{algorithm}{Specification}
@@ -162,6 +125,41 @@ CRDTs, a set and a counter.
 	\end{algorithmic}
  }
 \end{algorithm}
+
+\textbf{G-Set}. The first CRDT implementation of a set, \textit{Grow-Only Set},
+allows for \textit{add} and \textit{lookup} operations. Both state-based and
+op-based versions have a set as payload. To prove that this is a CmRDT it is
+easy to see that $\textit{add}(e)$ is commutative, being based on a set-union
+operation between the payload and $\{e\}$. In the state-based approach, as shown
+in Specification~\ref{alg:g_set_state_based}, the partial order on states $S$
+and $T$ is given by $S \sqsubseteq T \iff S \subseteq T$. Then, the
+\textit{merge} operation defined as $\textit{merge}(S,T) = S \cup T$ computes
+the LUB in the monotonic semilattice $(S, \sqsubseteq)$. And so, G-Set is also a
+CvRDT\footnote{For proofs on the rest of the constructs, the reader is
+referred to \cite{shapiro:inria-00555588}.}.
+
+\textbf{2P-Set}. A \textit{Two-Phase Set} brings the option to remove an
+element. However, once an element has been removed, it cannot be added again to
+the set. The principle is to use two G-Sets, one for adding and another for
+removing (also known as \textit{tombstone set}). Removing an element is
+conditioned by being present in the set at source. The state-based variant is
+shown in Specification~\ref{alg:2p_set_state_based}. The payload consists of set
+$A$ for adding and set $R$ for removing. Adding or removing the same element
+twice or adding an already removed element has no effect.
+
+\textbf{U-Set}. If we guarantee that each element in the set is unique and that
+an $\textit{add}(e)$ is delivered before $\textit{remove}(e)$, the tombstone set
+becomes redundant and can be discarded because the causal delivery criteria
+is met. This new data structure is called \textit{U-Set}.
+
+\textbf{PN-Set}. An alternative solution is to associate with each element a
+CRDT counter (initially set to 0) which is increased when the element is added
+to the set and decreased when it is removed. If the counter is negative, it
+means that the element is not in the set, and \textit{add} operation will not
+have any effect. Thus a PN-Set has the anomaly that after adding a previously
+removed element to an empty set, it remains empty. This may not always be the
+intended semantics, despite the fact that PN-Set converges: it combines two
+CRDTs, a set and a counter.
 
 \textbf{OR-Set}. The previously described set structures, although practical,
 have counter-intuitive behaviors. For example, the 2P-Set does not allow adding
