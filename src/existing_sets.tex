@@ -126,8 +126,8 @@ counter-intuitive behavior.
  }
 \end{algorithm}
 
-\textbf{G-Set}. The first CRDT implementation of a set, \textit{Grow-Only Set},
-allows for \textit{add} and \textit{lookup} operations. Both state-based and
+\textbf{G-Set}. The most basic CRDT implementation of a set, \textit{Grow-Only
+Set}, allows for \textit{add} and \textit{lookup} operations. Both state-based and
 op-based versions have a set as payload. To prove that this is a CmRDT it is
 easy to see that $\textit{add}(e)$ is commutative, being based on a set-union
 operation between the payload and $\{e\}$. In the state-based approach, as shown

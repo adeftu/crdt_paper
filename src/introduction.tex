@@ -38,8 +38,9 @@ Alternatively, several systems execute an update immediately and later discover
 that it conflicts with another~\cite{Terry:1995:MUC:224056.224070}. So they
 roll-back to resolve the conflict.
 
-\textit{Conflict-free Replicated Data Types} (CRDTs) were designed specifically
-to solve this problem by employing a new type of consistency, \textit{strong
+\textit{Conflict-free Replicated Data Types}
+(CRDTs)~\cite{Shapiro:2011:CRD:2050613.2050642} were designed specifically to
+solve this problem by employing a new type of consistency, \textit{strong
 eventual consistency}, as defined in Section~\ref{sec:crdts}. Replicas of CRDTs
 are proved to converge in a self-stabilising manner without blocking client
 operations and without having to deal with consensus, complex conflict
