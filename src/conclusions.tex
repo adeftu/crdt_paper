@@ -26,6 +26,12 @@ number of practical examples. We introduced two improvements to the original
 OR-Set specification: an algorithm for efficient delta-based synchronization and
 an extension for replica sharding. Lastly, we proposed a garbage collection
 mechanism to support lifetime-limited elements and to alleviate the problem of
-unbounded database growth. Based on this type, more complex structures can be
-built. Maps can be implemented as sets of registers and graphs can include two
-sets: one for vertices and another for edges.
+unbounded database growth. On the practical side, to the authors' knowledge,
+this is the first implementation of a CRDT in the sense of the system model
+described in this chapter. Proof-of-concept examples exists~\cite{ericmoritz,
+dominictarr}, but they focus only on testing the specifications for CRDTs
+locally and in-memory, without a real database store support.
+
+Based on this type, more complex structures can be built. Maps can be
+implemented as sets of registers and graphs can include two sets: one for
+vertices and another for edges.

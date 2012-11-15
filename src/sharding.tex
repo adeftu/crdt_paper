@@ -108,7 +108,7 @@ cluster $rc_{y}$ into the local state in cluster $rc_{x}$ is also similar. We
 just need to compute a minimum version $\tilde{T}_{x}$ first for the whole
 cluster by combining the information from all $T_{x}^{j}$ using
 $version(rc_{x})$ defined as:
-% \small
+\small
 \begin{align*}
 \tilde{T}_{x}[rc][rs] = \begin{cases}
                             max (\bigcup_{j \in \{1,\ldots,|rc_{x}|\}} T_{x}^{j}[rc][rs]) & \text{if } rc = rc_{x}, \\
@@ -117,7 +117,7 @@ $version(rc_{x})$ defined as:
 \\
 \hfill \forall rc = rc_{i}, i \in \{1,\ldots,N\}; \forall rs = rs_{i}^{j}, j \in \{1,\ldots,|rc_{i}|\}.
 \end{align*}
-% \normalsize
+\normalsize
 
 We set the minimum from all $T_{x}^{j}$ component-wise, except for
 $\tilde{T}_{x}[rc_{x}]$, where we choose the maximum instead since each shard in

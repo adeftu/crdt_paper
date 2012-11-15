@@ -1,0 +1,223 @@
+\section{Library Implementation}
+\label{sec:library_implementation}
+
+To test these concepts, we implemented a Java client library for the SOR-Set
+which can connect to any replica cluster and provide access to the usual set
+operations: adding, removing, looking up an element, or synchronizing with other
+replica clusters.
+
+For the database server we used Redis~\cite{redis}, a widely used, open-source,
+in-memory, key-value store. Redis data model is a dictionary that maps keys to
+values. The keys can be only strings, while values can be strings, lists, sets,
+sorted sets, or hashes. Important Redis features include persistence,
+replication, transactions, pipelining, and Lua scripting. In addition, it has
+support for associating timeouts with keys: after the timeout has expired, the
+key is automatically deleted. Our client communicates with Redis via the
+Jedis library~\cite{jedis}.
+
+The payload for each shard is stored in a separate Redis database, or
+\textit{store}, using the schema from
+Listing~\ref{lst:redis_database_schema_for_sor-set}, where underlined words
+represent hard-coded strings and non-underlined ones are to be replaced with
+their corresponding values.
+
+\begin{algorithm}[t]
+\setcounter{algorithm}{0}
+\small{
+	\floatname{algorithm}{Listing}
+	\caption{Redis database schema for a SOR-Set shard}
+ 	\label{lst:redis_database_schema_for_sor-set}                       
+ 	\begin{algorithmic}[1]
+ 	  \State \underline{timestamp}:$rc$:$rs$ $\rightarrow$ $t$ \Comment{Integer string}
+ 	  \State \underline{element}:$rc.rs.id$ $\begin{aligned}[t]
+                                              & \rightarrow \text{\underline{value}} \rightarrow e \\[-2pt]
+                                              & \rightarrow \text{\underline{add.t}} \rightarrow t \\[-2pt]
+                                              & \rightarrow \text{\underline{add.rc}} \rightarrow rc \\[-2pt]
+                                              & \rightarrow \text{\underline{add.rs}} \rightarrow rs \\[-2pt]
+                                              & \rightarrow \text{\underline{rmv.t}} \rightarrow t' \\[-2pt]
+                                              & \rightarrow \text{\underline{rmv.rc}} \rightarrow rc' \\[-2pt]
+                                              & \rightarrow \text{\underline{rmv.rs}} \rightarrow rs'
+                                            \end{aligned}$ \Comment{Hash}
+ 	  \State \underline{index}:$rc$:$rs$ $\rightarrow$ [$t$:$rc.rs.id$] \Comment{List}
+ 	  \State \underline{ids}:$e$ $\rightarrow$ {$rc.rs.id$} \Comment{Set}
+ 	  \State \underline{element:next.id} $\rightarrow$ $id$ \Comment{Integer string}
+	\end{algorithmic}
+ }
+\end{algorithm}
+
+Each cell of the vector of timestamps, $T[rc][rs]$, is stored at key
+\underline{timestamp}:$rc$:$rs$. Instead of using different sets for added and
+removed tuples, we combine and store them together as \textit{elements}.
+An element contains: i) the string value $e$, ii) information about a adding:
+timestamp $t$ and ids for the source replica cluster and shard, $(rc, rs)$, iii)
+similar information for removing: $t', rc', rs'$. Each element is stored in the
+hash at key \underline{element}:$rc.rs.id$, where $rc.rs.id$ represents a global
+unique id: $rc$ and $rs$ are the ids which uniquely identifies the source shard
+and $id$ is a per-shard counter stored at \underline{element:next.id} key which
+is incremented with each new element insertion.
+
+In Specification~\ref{alg:sor_set} of the SOR-Set, the \textit{merge} method
+filters all tuples added or removed after a given timestamp. For this purpose,
+an index is kept as a list of element ids sorted by their timestamp. With each
+add or remove of an element at shard $(rc, rs)$, its id is appended to the list
+\underline{index}:$rc$:$rs$. Since the index is kept per shard and timestamps at
+each shard are monotonically increasing (adding and removing always increases
+the local timestamp), \underline{index}:$rc$:$rs$ is guaranteed to be always
+sorted. Thus, filtering new elements is very efficient. Adding the same
+value $e$ multiple times to the set creates a new element for each operation. A
+second index stored at \underline{ids}:$e$ keeps all the element ids
+corresponding to value $e$, needed for $\textit{remove}(e)$ and
+$\textit{lookup}(e)$ methods.
+
+\textbf{Add}. Listing~\ref{alg:add} gives the pseudocode for \textit{add}
+operation. First, the logical clock of the shard and the local id counter are
+incremented. \texttt{incr} is an internal Redis command which increments the
+number stored at the specified key by one\footnote{The rest of Redis commands will not be
+described as their usage will be easily deduced from the context.}. Next, a
+hash is created to store the new element and its expiration time is set. Last
+two lines update the two indices previously discussed.
+
+\begin{algorithm}[t]
+    \small{
+    \floatname{algorithm}{Listing}
+    \caption{Redis SOR-Set: \textit{add}}
+    \label{alg:add}
+    \centering
+    \begin{algorithmic}[1]
+ 	  \Procedure{Add}{$e$, $rc$, $rs$, $ttl$}
+ 	    \State $t$ $\gets$ \texttt{incr} \underline{timestamp}:$rc$:$rs$
+ 	    \State $id$ $\gets$ \texttt{incr} \underline{element:next.id}
+ 	    \State \texttt{hmset} \underline{element}:$rc.rs.id$ $\begin{aligned}[t]
+                                                               & \text{\underline{value} } e \\[-2pt]
+                                                               & \text{\underline{add.t} } t \\[-2pt]
+                                                               & \text{\underline{add.rc} } rc \\[-2pt]
+                                                               & \text{\underline{add.rs} } rs
+                                                              \end{aligned}$
+        \State \texttt{expire} \underline{element}:$rc.rs.id$ $ttl$
+        \State \texttt{lpush} \underline{index}:$rc$:$rs$ $t$:$rc.rs.id$
+        \State \texttt{sadd} \underline{ids}:$e$ $rc.rs.id$
+ 	  \EndProcedure
+	\end{algorithmic}
+    }
+\end{algorithm}
+
+\textbf{Remove}. The \textit{remove} method is described in
+Listing~\ref{alg:remove}. Again, removing an element $e$ from an SOR-Set
+consists in getting all $ADD(e)$ tuples and tagging them as removed. Thus, on
+line~3 all element ids for value $e$ are retrieved using index
+\underline{ids}:$e$. For each element stored at \underline{element}:$gid$,
+if it is not yet expired, i.e. the key still exists in the database, the
+corresponding fields are populated. Finally, the procedure updates the
+expiration period of the element and pushes the new timestamp together with the
+id to the index list. After removal, the new timestamp $t'$ will be ahead of the
+old one, $t$, in this list, which the expected behavior: the remove happened
+after the add.
+
+\begin{algorithm}[t]
+    \small{
+    \floatname{algorithm}{Listing}
+    \caption{Redis SOR-Set: \textit{remove}}
+    \label{alg:remove}
+    \centering
+    \begin{algorithmic}[1]
+ 	  \Procedure{Remove}{$e$, $rc'$, $rs'$, $ttl$}
+ 	    \State $t'$ $\gets$ \texttt{incr} \underline{timestamp}:$rc'$:$rs'$
+ 	    \State $ids$ $\gets$ \texttt{smembers} \underline{ids}:$e$
+ 	    \ForAll{$gid$ \In $ids$}
+ 	      \If{\texttt{exists} \underline{element}:$gid$}
+ 	        \State \texttt{hmset} \underline{element}:$gid$ $\begin{aligned}[t]
+                                                              & \text{\underline{rmv.t} } t' \\[-2pt]
+                                                              & \text{\underline{rmv.rc} } rc' \\[-2pt]
+                                                              & \text{\underline{rmv.rs} } rs'
+                                                              \end{aligned}$
+            \State \texttt{expire} \underline{element}:$gid$ $ttl$
+            \State \texttt{lpush} \underline{index}:$rc'$:$rs'$ $t'$:$gid$
+ 	      \EndIf
+ 	    \EndFor
+ 	  \EndProcedure
+	\end{algorithmic}
+    }
+\end{algorithm}
+
+\textbf{Lookup}. The \textit{lookup} method searches for the existence of at
+least one $ADD(e)$ tuple for which there is no corresponding $RMV(e)$. If there
+is such tuple, then element $e$ is in the set. This is exactly what
+Listing~\ref{alg:lookup} does. First, ids for all elements $e$ are retrieved.
+Next, for each element $(e, t_1, rc_1, rs_1, t_1', rc_1', rs_1')$, if it is an
+$ADD(e)$ tuple ($t_{1}' = null$, its removed timestamp is not set) and does not
+exist any corresponding $RMV(e)$ tuple $(e, t_2, rc_2, rs_2, t_2', rc_2',
+rs_2')$, such that $(t_1, rc_1, rs_1) = (t_2, rc_2, rs_2)$ and $t_2' \neq
+null$, then $true$ is returned.
+
+\begin{algorithm}[t]
+\small{
+	\floatname{algorithm}{Listing}
+	\caption{Redis SOR-Set: \textit{lookup}}
+ 	\label{alg:lookup}
+ 	\begin{algorithmic}[1]
+ 	  \Function{Lookup}{$e$}
+ 	    \State $ids$ $\gets$ \texttt{smembers} \underline{ids}:$e$
+ 	    \ForAll{$gid_{1}$ \In $ids$}
+ 	      \If{\texttt{exists} \underline{element}:$gid_{1}$}
+ 	        \State ($t_{1}$, $rc_{1}$, $rs_{1}$, $t_{1}'$) $\gets$
+ 	        \Statex\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent} \texttt{hmget} \underline{element}:$gid_{1}$ \underline{add.t} \underline{add.rc} \underline{add.rs} \underline{rmv.t}
+ 	        \If{$t_{1}' = \Null$}
+ 	          \State $lookup \gets \True$
+ 	          \ForAll{$gid_{2}$ \In $ids$}
+ 	            \If{\texttt{exists} \underline{element}:$gid_{2}$}
+ 	              \State ($\_$, $t_{2}$, $rc_{2}$, $rs_{2}$, $t_{2}'$, $rc_{2}'$, $rs_{2}'$) $\gets$
+ 	              \Statex\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent} \texttt{hgetall} \underline{element}:$gid_{2}$
+ 	              \If{($t_{1}$, $rc_{1}$, $rs_{1}$) = ($t_{2}$, $rc_{2}$, $rs_{2}$) \Land
+ 	              \Statex\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{\algorithmicindent}\hspace{-3pt} $t_{2}' \neq \Null$}
+ 	                \State $lookup \gets \False$
+ 	                \State \Break
+ 	              \EndIf
+ 	            \EndIf
+ 	          \EndFor
+ 	          \If{$lookup = \True$}
+ 	            \State \Return \True
+ 	          \EndIf
+ 	        \EndIf
+ 	      \EndIf
+ 	    \EndFor
+ 	    \State \Return \False
+ 	  \EndFunction
+	\end{algorithmic}
+ }
+\end{algorithm}
+
+Procedures {\small\textsc{Add}}, {\small\textsc{Remove}}, and
+{\small\textsc{Lookup}} execute atomically and in isolation with other Redis
+commands on the store.
+
+\textbf{Merge}. The code for last method is given in Listing~\ref{alg:merge}.
+For lack of space we present only the main subroutines. On lines 2 and 3
+we compute the minimum versions for both the local and the remote clusters
+using the formula explained in Section~\ref{sec:sharding}. Based on the local
+version $\tilde{T}_{x}$, {\small\textsc{GetUpdates}} fetches the updates from
+remote cluster $rc_{y}$. This is done in 2 steps: first it gets the ids of
+the updates using \underline{index}:$rc$:$rs$ and then it retrieves the actual
+elements. {\small\textsc{AddUpdates}} distributes these elements to the stores
+in the local cluster according to $hash_{x}$ function. Adding an update element
+to the store is an operation similar to \textit{add}, except that the logical
+clock is not incremented and the TTLs are the ones retrieved before. Setting the
+logical clocks is done at the end in the {\small\textsc{UpdateTimestamps}}
+subroutine according to the formula $T_{x}^{j} \coloneqq max(T_{x}^{j},
+\tilde{T}_{y}), \forall j \in \{1,\ldots,|rc_{x}|\}$.
+
+\begin{algorithm}[t]
+\small{
+	\floatname{algorithm}{Listing}
+	\caption{Redis SOR-Set: \textit{merge}}
+ 	\label{alg:merge}
+ 	\begin{algorithmic}[1]
+ 	  \Procedure{Merge}{$rc_{x}$, $rc_{y}$}
+ 	    \State $\tilde{T}_{x}$ $\gets$ \Call{Version}{$rc_{x}$}
+ 	    \State $\tilde{T}_{y}$ $\gets$ \Call{Version}{$rc_{y}$}
+ 	    \State $updates$ $\gets$ \Call{GetUpdates}{$rc_{y}$, $\tilde{T}_{x}$}
+ 	    \State \Call{AddUpdates}{$rc_{x}$, $hash_{x}$, $updates$}
+ 	    \State \Call{UpdateTimestamps}{$rc_{x}$, $\tilde{T}_{y}$}
+ 	  \EndProcedure
+ 	\end{algorithmic}
+}
+\end{algorithm}
