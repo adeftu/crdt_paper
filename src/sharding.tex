@@ -17,7 +17,7 @@ will be referred to as \textbf{Sharded OR-Set} (\textbf{SOR-Set}).
 \end{figure}
 
 In order to coordinate incoming requests for each of the replicated set, a
-client entity should be used to forward the usual $\textit{add}(e)$,
+client entity should be used to forward the $\textit{add}(e)$,
 $\textit{remove}(e)$, and $\textit{lookup}(e)$ operations to the corresponding
 subset. For this purpose, the client can employ any partitioning function, such
 as a hash function with uniform distribution, which maps each element $e$ to a
@@ -93,12 +93,11 @@ instead of using a timestamp vector to keep track of the latest versions for the
 replicas as in the previous section, a vector of timestamp vectors $T$ is
 used. $T$ has as many components as there are clusters, while $T[rc_{i}]$ has
 $|rc_{i}|$ components, one for each shard. Like before, each cell $T[rc][rs]$
-stores the latest version of the logical clock of the shard $(rc, rs)$. Each
-shard has its own $T$. Since when adding or removing an element from the source
-replica, it will be added or, respectively, removed from only one shard $(rc,
-rs)$, i.e. the one computed by the hash function, each update can be uniquely
-tagged with the tuple $(t, rc, rs)$, where $t$ is the timestamp generated at
-$(rc, rs)$.
+stores the latest version of the logical clock of the shard $(rc, rs)$. Since
+when adding or removing an element from the source replica, it will be added or,
+respectively, removed from only one shard $(rc, rs)$, i.e. the one computed by
+the hash function, each update can be uniquely tagged with the tuple $(t, rc,
+rs)$, where $t$ is the timestamp generated at $(rc, rs)$.
 
 Returning to the specification, the payload is also distributed: $A_{i}^{j}$,
 $R_{i}^{j}$, and $T_{i}^{j}$ are, respectively, the set of added and removed
@@ -107,8 +106,8 @@ follow the same principle as before. Merging the state of a remote replica from
 cluster $rc_{y}$ into the local state in cluster $rc_{x}$ is also similar. We
 just need to compute a minimum version $\tilde{T}_{x}$ first for the whole
 cluster by combining the information from all $T_{x}^{j}$ using
-$version(rc_{x})$ defined as:
-\small
+$version(rc_{x})$:
+% \small
 \begin{align*}
 \tilde{T}_{x}[rc][rs] = \begin{cases}
                             max (\bigcup_{j \in \{1,\ldots,|rc_{x}|\}} T_{x}^{j}[rc][rs]) & \text{if } rc = rc_{x}, \\
