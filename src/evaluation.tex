@@ -42,8 +42,8 @@ described in Listing~\ref{alg:merge} relevant to these measurements:
 getting the element ids, fetching the actual elements from the remote
 cluster, and adding the elements to the local cluster. The first observation is
 that delta-based synchronization algorithm scales well with the database size.
-Since the number of updates between each merge operation was constant, the
-timings were also relatively constant. Thus, the \textit{merge} procedure has a
+Since the number of updates between each merge operation is constant, the
+timings are also relatively constant. Thus, the \textit{merge} procedure has a
 time complexity proportional to the number of updates, i.e. delta size, and not
 to the database size. Second, from this plot the average throughput for merging
 can be computed to 125,000 update elements per second.
