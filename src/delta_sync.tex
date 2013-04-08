@@ -84,7 +84,7 @@ identifier to an integer. Dynamic version vector maintenance using interval tree
 clocks~\cite{Almeida:2008:ITC:1496310.1496330} may alleviate this problem
 however.
 
-\begin{proof}[Proof that delta-based synchronization maintains the CRDT
+\begin{proof}[Delta-based synchronization maintains the CRDT
 properties] 
 We consider the partial order $(S, \sqsubseteq)$, where $\sqsubseteq$ is given
 by the \textit{compare} method in the specification. Both \textit{add} and
@@ -94,5 +94,5 @@ $X$ and $Y$, it is known that the following holds: $X \cup Y = X \cup (Y
 \setminus X)$. So \textit{merge} basically computes the union of the added and,
 respectively, removed sets using the right-hand side formula and the maximum of
 the two timestamp vectors. Hence we have $\textit{merge}(S_{1}, S_{2}) = S_{1}
-\sqcup S_{2}$ (LUB) which concludes the proof.
+\sqcup S_{2}$ (LUB).
 \end{proof}
