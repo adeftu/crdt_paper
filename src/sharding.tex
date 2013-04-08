@@ -144,7 +144,7 @@ $T_{x}^{j}[rc_{y}]$ and missed updates will be fetched with the next merge after
 the shard restores. Optionally, a master-slave replication scheme can be used to
 ensure fault-tolerance for any shard.
 
-\begin{proof}[Proof that sharding maintains the CRDT properties]
+\begin{IEEEproof}[Sharding maintains the CRDT properties]
 Consider a replica state as $s_{i} = (A_{i}, R_{i}, \tilde{T}_{i})$, where
 $A_{i} = \bigcup_{j \in \{1,\ldots,|rc_{i}|\}} A_{i}^{j}$ and $R_{i} =
 \bigcup_{j \in \{1,\ldots,|rc_{i}|\}} R_{i}^{j}$. Thus, a set is characterized
@@ -157,4 +157,4 @@ $R_{x}$ and $R_{y}$, respectively. Also, because each $T_{x}^{j}$ is updated
 with the maximum between $T_{x}^{j}$ and $\tilde{T}_{y}$, the newly obtained
 $\tilde{T}_{x}$ will be the maximum between $\tilde{T}_{x}$ and $\tilde{T}_{y}$.
 Therefore \textit{merge} computes the LUB.
-\end{proof}
+\end{IEEEproof}

@@ -92,7 +92,7 @@ local cluster will expire shortly after the original ones in remote cluster have
 expired. However, this does not invalidate the lookup semantics according to the
 tuples expiration theorem.
 
-\begin{proof}[Garbage collection maintains the CRDT properties]
+\begin{IEEEproof}[Garbage collection maintains the CRDT properties]
 We consider first the case when no sharding is used. A new partial order can be
 defined by the relation $S_{1} \sqsubseteq S_{2} \iff S_{1} \subseteq S_{2} \lor
 S_{1} \equiv (S_{1} \cap S_{2})$. The first term holds when no tuples are
@@ -107,4 +107,4 @@ can simply consider the union of all $A$ and, respectively, $R$ sets in one
 cluster as in Specification~\ref{alg:sor_set}: $S_{i} = \bigcup_{\forall j \in
 \{1,\ldots,|rc_{i}|\}} S_{i}^{j}$, where $S$ is $A$ or $R$. From this point, the
 proof follows the same rationale as for the SOR-Set.
-\end{proof}
+\end{IEEEproof}
