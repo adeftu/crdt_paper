@@ -1,22 +1,27 @@
 \section{Introduction}
 \label{sec:introduction}
 
-The common denominator of current commercial internet services ("cloud") is the promise and the demand to make data available, from anywhere, at any time, with low latency.
-Now, features like throughput, consistency, and fault-tolerance are necessities,
-not optimizations, and are included in the design of any modern distributed data
-system from the beginning. One cannot accept delays in database requests of more
-than a few hundred milliseconds or downtimes of even a few minutes. The trend is
-clear: we need to process more data, quicker, and without interruptions.
+The common denominator of current commercial Internet services ("cloud") is the
+promise and the demand to make data available, from anywhere, at any time, with
+low latency. Now, features like throughput, consistency, and fault-tolerance are
+necessities, not optimizations, and are included in the design of any modern
+distributed data system from the beginning. One cannot accept delays in database
+requests of more than a few hundred milliseconds or downtimes of even a few
+minutes. The trend is clear: we need to process more data, quicker, and without
+interruptions.
 
-\textit{Replication} of data has been the pattern to address fault-tolerance on one hand,
-while providing the means for achieving higher scalability and performance on the
-other hand. However, it introduces the problem of maintaining or restoring replica consistency - understood here as replicas behaving identically to requests - under concurrent updates and failures. CAP is a well known
-theorem~\cite{Gilbert:2002:BCF:564585.564601} which states that any distributed
-computer system cannot provide simultaneous guarantees for the aforementioned
-requirements. The majority of the current Internet services prefer availability
-and partition tolerance, while accepting a weaker form of consistency. The choice
-has the advantage of lower latencies for client requests and higher scalability,
-but achieving consistency between replicas still remains an open issue.
+\textit{Replication} of data has been the pattern to address fault-tolerance on
+one hand, while providing the means for achieving higher scalability and
+performance on the other hand. However, it introduces the problem of maintaining
+or restoring replica consistency - understood here as replicas behaving
+identically to requests - under concurrent updates and failures. CAP is a well
+known theorem~\cite{Gilbert:2002:BCF:564585.564601} which states that any
+distributed computer system cannot provide simultaneous guarantees for the
+aforementioned requirements. The majority of the current Internet services
+prefer availability and partition tolerance, while accepting a weaker form of
+consistency. The choice has the advantage of lower latencies for client requests
+and higher scalability, but achieving consistency between replicas still remains
+an open issue.
 
 One attractive approach is to provide \textit{eventual
 consistency}~\cite{DBLP:journals/queue/Vogels08a,Saito:2005:OR:1057977.1057980},
@@ -39,30 +44,39 @@ solve this problem by employing a new type of consistency, \textit{strong
 eventual consistency}, as defined in Section~\ref{sec:crdts}. Replicas of CRDTs
 are proved to converge in a self-stabilising manner without blocking client
 operations and without having to deal with consensus, complex conflict
-resolution, or roll-backs. However, this model imposes some mathematical
-- and, in conseqnuence, semantic - constraints, that make it unsuited for some data structures or use-cases.
+resolution, or roll-backs. However, this model imposes some mathematical - and,
+in consequence, semantic - constraints, that make it unsuited for some data
+structures or use-cases.
 
-Composites of CRDTs yield the same properties, and thus basic structures, e.g. counters, shared mutable
-variables or sets can be used as building blocks in forming more complex
-ones, like maps or graphs. For a practical use-case scenario, consider how an
-event tracking mechanism can be implemented in order to prevent attacks on an
-Internet service provider. Filters are used to keep track and to limit the
-number of events allowed for a given IP address or account, such as login
-attempts, password changes, emails sent, and so on. A replicated counter can
-store the number of login attempts from one IP address, while a replicated set
-the corresponding unique passwords tried. Since this case requires high
-throughput for writes of runtime data and low latencies for reads,
-traditional synchronization or conflict resolution are not acceptable. CRDTs are very
-attractive, as all updates are persistent and can immediately be applied locally
-at the source replica. Consistency is achieved later, during a background
-asynchronous phase in which all replicas eventually apply all updates.
-Furthermore, the composability nature of CRDTs allows this use case to be easily
-extended to a graph-like structure: store relations among various events and
-entities, such as account, IP addresses, aliases, and login attempts in order to
-better detect malicious behaviour with heuristic algorithms. Another application
-of the CRDTs is cooperative editing~\cite{Preguica:2009:CRD:1584339.1584604}.
+Composites of CRDTs yield the same properties, and thus basic structures, e.g.
+counters, shared mutable variables or sets can be used as building blocks in
+forming more complex ones, like maps or graphs. For a practical use-case
+scenario, consider how an event tracking mechanism can be implemented in order
+to prevent attacks on an Internet service provider. Filters are used to keep
+track and to limit the number of events allowed for a given IP address or
+account, such as login attempts, password changes, emails sent, and so on. A
+replicated counter can store the number of login attempts from one IP address,
+while a replicated set the corresponding unique passwords tried. Since this case
+requires high throughput for writes of runtime data and low latencies for reads,
+traditional synchronization or conflict resolution are not acceptable. CRDTs are
+very attractive, as all updates are persistent and can immediately be applied
+locally at the source replica. Consistency is achieved later, during a
+background asynchronous phase in which all replicas eventually apply all
+updates. Furthermore, the composability nature of CRDTs allows this use case to
+be easily extended to a graph-like structure: store relations among various
+events and entities, such as account, IP addresses, aliases, and login attempts
+in order to better detect malicious behaviour with heuristic algorithms. Another
+application of the CRDTs is cooperative
+editing~\cite{Preguica:2009:CRD:1584339.1584604}.
 
-The focus of this paper is an extension of a particular CRDT: the \textit{set} data type as defined in ~\cite{Shapiro:2011:CRD:2050613.2050642}. Therein, the authors define two functionally equivalent synchronizations variants: The \textit{operations-based} synchronization distributes and merges update operations among different replicas, while the \textit{state-based} synchronization does the same with complete replica state(s). Our paper makes the following contributions:
+The focus of this paper is an extension of a particular CRDT: the \textit{set}
+data type as defined in ~\cite{Shapiro:2011:CRD:2050613.2050642}. Therein, the
+authors define two functionally equivalent synchronizations variants: The
+\textit{operations-based} synchronization distributes and merges update
+operations among different replicas, while the \textit{state-based}
+synchronization does the same with complete replica state(s). Our paper makes
+the following contributions:
+
 \begin{itemize}
   \item An improvement to the set type is provided which
   transmits only incremental state deltas.

@@ -36,12 +36,13 @@ into Replica~B using a pool of 16 threads, and then repeat the process.
   \end{minipage}
 \end{figure}
 
-Results are presented in Fig.~\ref{fig:bench_delta}. Here are also included
-the average timings for each subroutine  of the \textit{merge} procedure
-described in Listing~\ref{alg:merge} relevant to these measurements:
-getting the element ids, fetching the actual elements from the remote
-cluster, and adding the elements to the local cluster. The first observation is
-that delta-based synchronization algorithm scales well with the database size, showing a synchronization cost which is constant per update and per million set elements.
+Results are presented in Fig.~\ref{fig:bench_delta}. Here are also included the
+average timings for each subroutine  of the \textit{merge} procedure described
+in Listing~\ref{alg:merge} relevant to these measurements: getting the element
+ids, fetching the actual elements from the remote cluster, and adding the
+elements to the local cluster. The first observation is that delta-based
+synchronization algorithm scales well with the database size, showing a
+synchronization cost which is constant per update and per million set elements.
 Since the number of updates between each merge operation is constant, the
 timings are also relatively constant. Thus, the \textit{merge} procedure has a
 time complexity proportional to the number of updates, i.e. delta size, and not
