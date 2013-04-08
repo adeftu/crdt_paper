@@ -1,18 +1,15 @@
 \begin{abstract}
-Data replication is the fundamental approach to achieve load balancing,
-scalability, and fault tolerance. In order to maintain replicas of some mutable
-shared object consistent, synchronization is usually needed.
+Replication of state is the fundamental approach to achieve scalability and availability. In order to maintain or restore replica consistency under updates, some form of synchronization is needed.
 \textit{Conflict-free Replicated Data Types} (CRDTs) ensure eventual
 consistency, such that replicas converge to a common state, equivalent to a
 correct sequential execution without foreground synchronization.
 
 A particular CRDT is the \textit{set} data type, which is a pervasive
 abstraction for storing collections of unique elements and constitutes an
-important building block for other more complex data structures. Since the
+important building block for other, more complex data structures. Since the
 original specification is not scalable, we improve it by introducing an
 efficient algorithm for sending deltas of updates between replicas and by
 partitioning a set replica into disjunctive subsets. We further add support for
-limited-lifetime elements and solve the problem of unbounded database growth
-through a garbage collection mechanism. Lastly, implementation details and
+limited-lifetime elements, which, in turn, enable simple garbage collection strategies to address the problem of unbounded database growth. Lastly, implementation details and
 evaluation results of a client library for this data structure are presented.
 \end{abstract}
